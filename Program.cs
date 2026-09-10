@@ -10,7 +10,6 @@ using studentProjectManagement.Services;
 using studentProjectManagement.Validators;
 using System.Text;
 
-
 namespace studentProjectManagement
 {
     public class Program
@@ -39,27 +38,30 @@ namespace studentProjectManagement
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-        )
+        ),
+        ClockSkew = TimeSpan.Zero // Set ClockSkew to zero so tokens expire precisely when their lifetime is up
     };
 });
 
-            //// Add the Token in Scalar Not Mandatory (if Not Added the Check in Postman)
-            //builder.Services.AddOpenApi(options =>
-            //{
-            //    options.AddDocumentTransformer((document, context, cancellationToken) =>
-            //    {
-            //        document.Components ??= new();
-            //        document.Components.SecuritySchemes.Add("Bearer", new OpenApiSecurityScheme
-            //        {
-            //            Type = SecuritySchemeType.Http,
-            //            Scheme = "bearer",
-            //            BearerFormat = "JWT",
-            //            In = ParameterLocation.Header,
-            //            Description = "Enter your JWT token here (no need to type 'Bearer' prefix)"
-            //        });
-            //        return Task.CompletedTask;
-            //    });
-            //});
+            // Add the Token in Scalar Not Mandatory (if Not Added the Check in Postman)
+            builder.Services.AddOpenApi(options =>
+            {
+                options.AddDocumentTransformer((document, context, cancellationToken) =>
+                {
+                    document.Components ??= new();
+                    document.Components.SecuritySchemes ??=
+     new Dictionary<string, IOpenApiSecurityScheme>();
+                    document.Components.SecuritySchemes.Add("Bearer", new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        In = ParameterLocation.Header,
+                        Description = "Enter your JWT token here (no need to type 'Bearer' prefix)"
+                    });
+                    return Task.CompletedTask;
+                });
+            });
 
             builder.Services.AddScoped<TokenService>();
 
@@ -74,7 +76,7 @@ namespace studentProjectManagement
                         builder.Configuration.GetConnectionString("DefaultConnection")
                         )
                 );
-            builder.Services.AddOpenApi();
+        
 
             builder.Services.AddCors(options =>
             {
